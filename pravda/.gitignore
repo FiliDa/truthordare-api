@@ -1,0 +1,97 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+*.db
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+.idea/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+.egg
+MANIFEST
+
+# Environments
+config.json
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+celerybeat-schedule
+
+# PEP 582 (pypackages)
+**/pypackages/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# pyenv
+.python-version
+
+# PyInstaller
+*.manifest
+.spec
+**/versions/
+
+# Translations
+*.mo
+*.pot
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Media files
+media/
+static/
+uploads/
+
+# Sphinx documentation
+docs/_build/
+
+# VSCode Editor
+.vscode/
+
+# Telegram sessions
+*.session
+
+# Cache
+.ruff_cache/

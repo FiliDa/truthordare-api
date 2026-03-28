@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админка — Правда или Действие</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Административная панель</h1>
+    <nav>
+      <a href="/docs" target="_blank">Swagger</a>
+    </nav>
+  </header>
+  {% if status %}
+  <div class="statusbar {% if status=='ok' %}ok{% else %}error{% endif %}">
+    {% if status=='ok' %}Сохранено{% else %}Ошибка{% endif %}
+  </div>
+  {% endif %}
+
+  <section class="tabs">
+    <a class="tab {% if category=='all' %}active{% endif %}" href="/admin?category=all">Все</a>
+    {% for c in categories %}
+      <a class="tab {% if category==c %}active{% endif %}" href="/admin?category={{ c }}">{{ c }}{% if cat_counts and cat_counts.get(c) %} ({{ cat_counts.get(c) }}){% endif %}</a>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Добавить новую фразу</h2>
+    <form class="row" method="post" action="/admin/add">
+      <label>
+        Тип
+        <select name="type">
+          <option value="truth">Truth</option>
+          <option value="dare">Dare</option>
+        </select>
+      </label>
+      <label>
+        Категория
+        <select name="category">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if c=='family' %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="grow">
+        Текст
+        <input name="text" type="text" placeholder="Текст фразы" maxlength="200" required />
+      </label>
+      <button type="submit" class="btn">Добавить</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Тестер</h2>
+    <form class="row" method="get" action="/admin">
+      <input type="hidden" name="show_tester" value="1" />
+      <label>
+        Тип
+        <select name="ttype">
+          <option value="random" {% if ttype=='random' %}selected{% endif %}>Random</option>
+          <option value="truth" {% if ttype=='truth' %}selected{% endif %}>Truth</option>
+          <option value="dare" {% if ttype=='dare' %}selected{% endif %}>Dare</option>
+        </select>
+      </label>
+      <label>
+        Категория
+        <select name="category">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if category==c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="btn">Показать</button>
+    </form>
+    {% if show_tester=='1' %}
+      <div class="phrase highlight">{{ test_phrase }}</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Список фраз</h2>
+    <div class="row space-between">
+      <div>Всего: {{ total }} | Страница {{ page }} из {{ pages }}</div>
+      <div>
+        {% if page>1 %}<a class="btn" href="/admin?type={{ filter }}&category={{ category }}&q={{ search }}&page={{ page-1 }}&per_page={{ per_page }}">Назад</a>{% endif %}
+        {% if page<pages %}<a class="btn" href="/admin?type={{ filter }}&category={{ category }}&q={{ search }}&page={{ page+1 }}&per_page={{ per_page }}">Вперёд</a>{% endif %}
+      </div>
+    </div>
+    <form class="toolbar sticky" method="get" action="/admin">
+      <input name="q" value="{{ search }}" placeholder="Поиск..." />
+      <select name="type">
+        <option value="all" {% if filter=='all' %}selected{% endif %}>All</option>
+        <option value="truth" {% if filter=='truth' %}selected{% endif %}>Truth</option>
+        <option value="dare" {% if filter=='dare' %}selected{% endif %}>Dare</option>
+      </select>
+      <select name="category">
+        <option value="all" {% if category=='all' %}selected{% endif %}>Все категории</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if category==c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <select name="per_page">
+        {% for n in [10,25,50,100] %}
+          <option value="{{ n }}" {% if per_page==n %}selected{% endif %}>{{ n }} на странице</option>
+        {% endfor %}
+      </select>
+      <input name="page" type="number" min="1" value="{{ page }}" style="max-width:90px" />
+      <button type="submit">Фильтровать</button>
+      <a class="btn outline" href="/admin">Сбросить</a>
+      <a class="btn" href="/api/base" target="_blank">Экспорт JSON</a>
+    </form>
+
+    <div class="row wrap gap">
+      <form method="post" action="/admin/clear" class="row gap" onsubmit="return confirm('Очистить выбранный диапазон?');">
+        <select name="scope">
+          <option value="all">Очистить всё</option>
+          <option value="truth">Очистить Правду</option>
+          <option value="dare">Очистить Действие</option>
+        </select>
+        <select name="category">
+          <option value="">Любая категория</option>
+          {% for c in categories %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn danger">Очистить</button>
+      </form>
+
+      <form method="post" action="/admin/bulk-add" class="row gap">
+        <select name="type">
+          <option value="truth">Правда</option>
+          <option value="dare">Действие</option>
+        </select>
+        <select name="category">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if c=='family' %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <textarea name="lines" rows="6" cols="60" placeholder="Одна фраза на строку"></textarea>
+        <button type="submit" class="btn">Добавить списком</button>
+      </form>
+
+      <form method="post" action="/admin/bulk-replace" class="row gap" onsubmit="return confirm('Заменить список выбранной категории?');">
+        <select name="scope">
+          <option value="truth">Заменить список Правды</option>
+          <option value="dare">Заменить список Действия</option>
+        </select>
+        <select name="category">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if c=='family' %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <textarea name="lines" rows="6" cols="60" placeholder="Одна фраза на строку"></textarea>
+        <button type="submit" class="btn warn">Заменить</button>
+      </form>
+
+      
+    </div>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Тип</th>
+          <th>Категория</th>
+          <th>Текст</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in phrases %}
+        <tr>
+          <td class="mono">#{{ p.id }}</td>
+          <td>
+            <form method="post" action="/admin/update/{{ p.id }}">
+              <select name="type" class="badge-select">
+                <option value="truth" {% if p.type=='truth' %}selected{% endif %}>Truth</option>
+                <option value="dare" {% if p.type=='dare' %}selected{% endif %}>Dare</option>
+              </select>
+              <button type="submit" class="btn">Сохранить</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="/admin/update/{{ p.id }}">
+              <select name="category">
+                {% for c in categories %}
+                  <option value="{{ c }}" {% if p.category==c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn">Сохранить</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="/admin/update/{{ p.id }}" class="row">
+              <input name="text" type="text" maxlength="200" value="{{ p.text }}" />
+              <button type="submit" class="btn">Сохранить</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="/admin/delete/{{ p.id }}" onsubmit="return confirm('Удалить фразу #{{ p.id }}?');">
+              <button type="submit" class="btn danger">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="row pager">
+      {% if page>1 %}<a class="btn" href="/admin?type={{ filter }}&category={{ category }}&q={{ search }}&page={{ page-1 }}&per_page={{ per_page }}">Назад</a>{% endif %}
+      {% if page<pages %}<a class="btn" href="/admin?type={{ filter }}&category={{ category }}&q={{ search }}&page={{ page+1 }}&per_page={{ per_page }}">Вперёд</a>{% endif %}
+    </div>
+  </section>
+
+</body>
+</html>
